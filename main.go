@@ -1,17 +1,23 @@
 package main
 
+// Host: db4free.net 
+// DB: bitlyequisens
+
+
 import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
-	"github.com/aws/aws-lambda-go/lambda"
+	//"github.com/aws/aws-lambda-go/lambda"
 	"database/sql"
 	"fmt"
 	"strconv"
 	"os"
 	_ "github.com/go-sql-driver/mysql"
+    "time"
+    "net/url"
 )
 
 type link struct {
@@ -30,12 +36,15 @@ type linkids struct {
 	} `json:"links"`
 }
 
+var (
+    token = os.Getenv("BITLYTOKEN")
+    password = os.Getenv("DBPASSWORD")
+)
+
 func HandleRequest() {
-	//linkid := "3N7jxxl"
 	for _, linkid := range GetLinkIds(){
-		token := os.Getenv("BITLYTOKEN")
 		client := &http.Client{}
-		req, err := http.NewRequest("GET", "https://api-ssl.bitly.com/v4/bitlinks/bit.ly/" + linkid + "/clicks?unit=day&units=2", nil) // TODO, he d'agafar els clicks de tot el mes
+		req, err := http.NewRequest("GET", "https://api-ssl.bitly.com/v4/bitlinks/bit.ly/" + linkid + "/clicks?unit=month&units=1", nil) // Gets ALL links of any date
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -58,13 +67,25 @@ func HandleRequest() {
 	}
 }
 
+func GetOldestDate () string {
+    // Returns the date of two years ago from now
+    theTime := time.Now()
+    toAdd := -17280 * time.Hour
+    newTime := theTime.Add(toAdd)
+    log.Println("Oldest date to get links indexes is", newTime)
+    log.Println("Formated date is", newTime.Format("2006-01-02T15:04:05-0700"))
+    return url.QueryEscape(newTime.Format("2006-01-02T15:04:05-0700"))
+}
+
 func GetLinkIds() []string {
-	token := os.Getenv("BITLYTOKEN")
+    // Outputs the list of bitly link ID's
 	var listIds []string
 	ids := linkids{}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://api-ssl.bitly.com/v4/groups/Bj156NPShb0/bitlinks/clicks?unit=month&units=1&unit_reference=2023-08-02T15%3A04%3A05-0700&size=10", nil)
+    reqLink := "https://api-ssl.bitly.com/v4/groups/Bj156NPShb0/bitlinks/clicks?" + GetOldestDate()
+    log.Printf("link to get list of links id is %s", reqLink)
+	req, err := http.NewRequest("GET", reqLink , nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -87,20 +108,20 @@ func GetLinkIds() []string {
 		item := strings.Split(id.Id, "/")
 		listIds = append(listIds, item[1])
 	}
-	fmt.Println(listIds)
+	log.Println("list of link id's", listIds)
 	return listIds
 }
 
 func insertDb(linkid string, links []struct{Date string "json:\"date\""; Clicks int "json:\"clicks\""}) {
-	password := os.Getenv("DBPASSWORD")
+    log.Printf("Going to insert link %s data into Mysql", linkid)
+    log.Printf("Data to insert %+v", links)
 	db, err := sql.Open("mysql", "userequisens:" + password + "@tcp(db4free.net:3306)/bitlyequisens")
     if err != nil {
-		log.Panic("impossible to create the connection: %s", err)
+		log.Panic("Impossible to create the connection to Mysql: %s", err)
     }
     defer db.Close()
-	fmt.Printf("%+v\n", links[1].Date)
-	date := strings.Split(links[1].Date, "T")
-	clicks := strconv.Itoa(links[1].Clicks)
+	date := strings.Split(links[0].Date, "T")
+	clicks := strconv.Itoa(links[0].Clicks)
 
 	query := "INSERT INTO `links` (`linkid`, `date`, `clicks`) VALUES ('" + linkid + "', '" + date[0] + "', " + clicks + ")"
 	fmt.Println(query)
@@ -116,5 +137,6 @@ func insertDb(linkid string, links []struct{Date string "json:\"date\""; Clicks 
 }
 
 func main() {
-	lambda.Start(HandleRequest)
+    //lambda.Start(HandleRequest)
+    HandleRequest()
 }
