@@ -2,7 +2,7 @@ package main
 
 // Host: db4free.net 
 // DB: bitlyequisens
-
+// User: userequisens
 
 import (
 	"encoding/json"
@@ -137,6 +137,6 @@ func insertDb(linkid string, links []struct{Date string "json:\"date\""; Clicks 
 }
 
 func main() {
-    //lambda.Start(HandleRequest)
+	//lambda.Start(HandleRequest)
     HandleRequest()
 }
