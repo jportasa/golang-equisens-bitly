@@ -1,9 +1,5 @@
 package main
 
-// Host: db4free.net 
-// DB: bitlyequisens
-// User: userequisens
-
 import (
 	"encoding/json"
 	"io/ioutil"
@@ -38,7 +34,10 @@ type linkids struct {
 
 var (
     token = os.Getenv("BITLYTOKEN")
-    password = os.Getenv("DBPASSWORD")
+    dbhost = os.Getenv("DBHOST")
+    dbuser = os.Getenv("DBUSER")
+    dbpassword = os.Getenv("DBPASSWORD")
+    dbname = os.Getenv("DBNAME")
 )
 
 func HandleRequest() {
@@ -115,7 +114,7 @@ func GetLinkIds() []string {
 func insertDb(linkid string, links []struct{Date string "json:\"date\""; Clicks int "json:\"clicks\""}) {
     log.Printf("Going to insert link %s data into Mysql", linkid)
     log.Printf("Data to insert %+v", links)
-	db, err := sql.Open("mysql", "userequisens:" + password + "@tcp(db4free.net:3306)/bitlyequisens")
+	db, err := sql.Open("mysql", dbuser + ":" + dbpassword + "@tcp(" + dbhost + ":3306)/" + dbname)
     if err != nil {
 		log.Panic("Impossible to create the connection to Mysql: %s", err)
     }
