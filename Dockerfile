@@ -18,7 +18,6 @@ RUN CGO_ENABLED=0 GOOS=linux ARCH=amd64 go build -o /main
 ############################
 # STEP 2 create a small image with the binary
 ############################
-
 FROM scratch
 WORKDIR /
 COPY --from=builder /main /main
