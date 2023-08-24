@@ -7,13 +7,10 @@ import (
 	"net/http"
 	"strings"
 	//"github.com/aws/aws-lambda-go/lambda"
-	"database/sql"
-	"fmt"
-	"strconv"
 	"os"
-	_ "github.com/go-sql-driver/mysql"
     "time"
     "net/url"
+	"bitlyequisens/db"
 )
 
 type link struct {
@@ -33,11 +30,7 @@ type linkids struct {
 }
 
 var (
-    token = os.Getenv("BITLYTOKEN")
-    dbhost = os.Getenv("DBHOST")
-    dbuser = os.Getenv("DBUSER")
-    dbpassword = os.Getenv("DBPASSWORD")
-    dbname = os.Getenv("DBNAME")
+    Token = os.Getenv("BITLYTOKEN")
 )
 
 func HandleRequest() {
@@ -47,7 +40,7 @@ func HandleRequest() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		req.Header.Set("Authorization", "Bearer " + token)
+		req.Header.Set("Authorization", "Bearer " + Token)
 		resp, err := client.Do(req)
 		if err != nil {
 			log.Fatal(err)
@@ -62,7 +55,7 @@ func HandleRequest() {
 		if err != nil {
 			log.Panic("error:", err)
 		}
-		insertDb(linkid, links.LinkClicks)
+		db.InsertDb(linkid, links.LinkClicks)
 	}
 }
 
@@ -88,7 +81,7 @@ func GetLinkIds() []string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Header.Set("Authorization", "Bearer " + token)
+	req.Header.Set("Authorization", "Bearer " + Token)
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
@@ -109,30 +102,6 @@ func GetLinkIds() []string {
 	}
 	log.Println("list of link id's", listIds)
 	return listIds
-}
-
-func insertDb(linkid string, links []struct{Date string "json:\"date\""; Clicks int "json:\"clicks\""}) {
-    log.Printf("Going to insert link %s data into Mysql", linkid)
-    log.Printf("Data to insert %+v", links)
-	db, err := sql.Open("mysql", dbuser + ":" + dbpassword + "@tcp(" + dbhost + ":3306)/" + dbname)
-    if err != nil {
-		log.Panic("Impossible to create the connection to Mysql: %s", err)
-    }
-    defer db.Close()
-	date := strings.Split(links[0].Date, "T")
-	clicks := strconv.Itoa(links[0].Clicks)
-
-	query := "INSERT INTO `links` (`linkid`, `date`, `clicks`) VALUES ('" + linkid + "', '" + date[0] + "', " + clicks + ")"
-	fmt.Println(query)
-	insertResult, err := db.Exec(query)
-	if err !=nil {
-		panic(err.Error())
-	}
-	id, err := insertResult.LastInsertId()
-	if err != nil {
-		log.Fatalf("impossible to retrieve last inserted id: %s", err)
-	}
-	log.Printf("inserted id: %d", id)
 }
 
 func main() {
