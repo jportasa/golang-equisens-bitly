@@ -5,10 +5,9 @@ ARG GOVERSION="1.19"
 ############################
 FROM golang:${GOVERSION}-alpine AS builder
 WORKDIR /app
-COPY go.mod go.sum ./
+COPY . ./
 # Download Go modules
 RUN go mod download
-COPY *.go ./
 # Build
 RUN CGO_ENABLED=0 GOOS=linux ARCH=amd64 go build -o /main
 
