@@ -9,5 +9,9 @@ jobs:
   build-push:
     uses: jportasa/ci-reusable-library/.github/workflows/ci.yaml@master
     with:
-      image: production,staging
+      image: jportacloud/golang-equisens-bitly
       environment: development
+    secrets:
+      dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+      dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+
