@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-push:
-    uses: jportasa/ci-reusable-library/.github/workflows/ci.yaml@main
+    uses: jportasa/ci-reusable-library/.github/workflows/ci.yaml@master
     with:
       image: production,staging
       environment: development
