@@ -8,7 +8,7 @@ on:
 jobs:
   build-push:
     env:
-        IMAGE: ${{ github.repository }}
+        IMAGE: jportacloud/golang-equisens-bitly
     runs-on: ubuntu-latest
     steps:
 
